@@ -25,12 +25,22 @@ public class MinHeap<T> {
         construirHeap();
     }
         
-    public void construirHeap() { 
+    public ArrayList <Integer> construirHeap() { 
+        ArrayList <Integer> cambios = new ArrayList<>();
         for (int i = (cardinal - 1) / 2; i >= 0; i--) {
-            reheap(i);  
-        }
+            reheap(i,cambios);  
+        }return cambios;
     }
-    
+    public  ArrayList<Integer> obtenerPrioridades(){
+        ArrayList<Integer> posiciones = construirHeap();
+        return posiciones;
+    }
+    public ArrayList<T> elementos(){
+        return this.heap;
+    }
+    public T obtener(int posicion){   
+        return heap.get(posicion);   
+    }
     public boolean isEmpty() { 
         return cardinal < 1;
     }
@@ -46,21 +56,52 @@ public class MinHeap<T> {
         return cardinal;
     }
     
-    public void eliminarPorPosicion(int posicion) {
+    public ArrayList<Integer> eliminarPorPosicion(int posicion) {
+        ArrayList<Integer> cambios = new ArrayList<>();
         if (esPosValida(posicion)) {
             this.heap.set(posicion, this.heap.get(cardinal - 1));
             cardinal--;
-            reheap(posicion);
+            reheap(posicion,cambios);
         }
+        return cambios;
     }
+    // public ArrayList<Integer> encolar(T elem) {
+    //     ArrayList<Integer> cambios = new ArrayList<>();
+    //     int indice = cardinal; // Nuevo elemento va al final
+    //     int padre = (indice - 1) / 2;
     
+    //     // Si el índice supera el tamaño del heap, agrega el elemento
+    //     if (indice >= this.heap.size()) {
+    //         this.heap.add(elem);
+    //     } else {
+    //         this.heap.set(indice, elem);
+    //     }
+    
+    //     cambios.add(indice); // Registrar la posición inicial
+    
+    //     // Sift-up para restaurar la propiedad del MinHeap
+    //     while (indice > 0 && comparator.compare(elem, this.heap.get(padre)) < 0) {
+    //         this.heap.set(indice, this.heap.get(padre)); // Mueve el padre hacia abajo
+    //         cambios.add(indice); // Registra el cambio
+    //         indice = padre; // Actualiza índice al del padre
+    //         padre = (indice - 1) / 2; // Recalcula el padre
+    //     }
+    
+    //     this.heap.set(indice, elem); // Coloca el elemento en su posición final
+    //     cambios.add(indice); // Registra la posición final
+    
+    //     cardinal++; // Incrementa el tamaño del heap
+    //     return cambios;
+    // }
+     
     public void encolar(T elem) {
+       
         int indice = cardinal;
         int padre = (indice - 1) / 2;
 
         while (indice > 0 && comparator.compare(elem, this.heap.get(padre)) < 0) { // Cambio de > a <
             this.heap.add(indice, this.heap.get(padre));
-            actualizarPosicion(this.heap.get(indice), indice);
+           // actualizarPosicion(this.heap.get(indice), indice);
             indice = padre;
             padre = (indice - 1) / 2;
         }
@@ -70,22 +111,24 @@ public class MinHeap<T> {
         } else {
             this.heap.set(indice, elem);
         }
-        actualizarPosicion(elem, indice);
+       // actualizarPosicion(elem, indice);
         cardinal++;
     }
     
-    public T desencolar() {
+    public Tupla<T,ArrayList<Integer>> desencolar() {
+        ArrayList<Integer> cambios = new ArrayList<>();
         T raiz = null;
         if (!isEmpty()) {
             raiz = this.heap.get(0);
             this.heap.set(0, this.heap.get(cardinal - 1));
             this.cardinal--;
-            reheap(0);
+            reheap(0,cambios);
         }
-        return raiz;
+        Tupla<T,ArrayList<Integer>> res = new Tupla<>(raiz,cambios);
+        return res; 
     }
     
-    public void reheap(int elem) {
+    public void reheap(int elem,ArrayList<Integer> cambios) {
         boolean done = false;
         T temp = heap.get(elem);
         int hijo_izq = 2 * elem + 1;
@@ -100,7 +143,8 @@ public class MinHeap<T> {
 
             if (comparator.compare(temp, this.heap.get(hijo_mas_chico)) > 0) { // Cambio de < a >
                 this.heap.set(elem, this.heap.get(hijo_mas_chico));
-                actualizarPosicion(heap.get(elem), elem);
+                cambios.add(elem);
+                //actualizarPosicion(heap.get(elem), elem);
                 elem = hijo_mas_chico;
                 hijo_izq = 2 * elem + 1;
             } else {
@@ -109,7 +153,8 @@ public class MinHeap<T> {
         }
 
         this.heap.set(elem, temp);
-        actualizarPosicion(temp, elem);
+        cambios.add(elem);
+        //actualizarPosicion(temp, elem);
     }
     
     public void modificarEnHeap(int posicion) {
@@ -117,7 +162,7 @@ public class MinHeap<T> {
             T elemento = this.heap.get(posicion);
             siftUp(posicion);
             siftDown(posicion);
-            actualizarPosicion(elemento, posicion);
+           // actualizarPosicion(elemento, posicion);
         }
     }
     
@@ -126,12 +171,12 @@ public class MinHeap<T> {
         T elemento = this.heap.get(posicion);
         while (posicion > 0 && comparator.compare(elemento, this.heap.get(padre)) < 0) { // Cambio de > a <
             this.heap.set(posicion, this.heap.get(padre));
-            actualizarPosicion(this.heap.get(posicion), posicion);
+          //  actualizarPosicion(this.heap.get(posicion), posicion);
             posicion = padre;
             padre = (posicion - 1) / 2;
         }
         this.heap.set(posicion, elemento);
-        actualizarPosicion(elemento, posicion);
+        //actualizarPosicion(elemento, posicion);
     }
     
     private void siftDown(int posicion) {
@@ -148,7 +193,7 @@ public class MinHeap<T> {
 
             if (comparator.compare(elemento, this.heap.get(hijo_mas_chico)) > 0) { // Cambio de < a >
                 this.heap.set(posicion, this.heap.get(hijo_mas_chico));
-                actualizarPosicion(this.heap.get(posicion), posicion);
+              //  actualizarPosicion(this.heap.get(posicion), posicion);
                 posicion = hijo_mas_chico;
                 hijo_izq = 2 * posicion + 1;
             } else {
@@ -156,20 +201,20 @@ public class MinHeap<T> {
             }
         }
         this.heap.set(posicion, elemento);
-        actualizarPosicion(elemento, posicion);
+        //actualizarPosicion(elemento, posicion);
     }
     
     private boolean esPosValida(int posicion) {
         return posicion >= 0 && posicion < cardinal;
     }
     
-    private void actualizarPosicion(Object elemento, int posicion) {
-        if (elemento instanceof Traslado) {
-            ((Traslado) elemento).setPosRedituable(posicion);
-        } else if (elemento instanceof Ciudad) {
-            ((Ciudad) elemento).setPosHeapSuperavit(posicion);
-        }
-    }
+    // private void actualizarPosicion(Object elemento, int posicion) {
+    //     if (elemento instanceof Traslado) {
+    //         ((Traslado) elemento).setPosRedituable(posicion);
+    //     } else if (elemento instanceof Ciudad) {
+    //         ((Ciudad) elemento).setPosHeapSuperavit(posicion);
+    //     }
+    // }
     
     @Override
     public String toString() {

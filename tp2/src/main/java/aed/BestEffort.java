@@ -2,16 +2,15 @@ package aed;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Arrays;
 
 public class BestEffort {
    // private ArrayList<Ciudad> ciudades;
     private Ciudad[] ciudades;  //ahora uso un array porque la cantidad de ciudades es fija (y es ma linda la notacion)
-    public  MaxHeap<Traslado> heapRedituable; 
-    public MinHeap<Traslado> heapAntiguo;    
+    public  Heap<Traslado> heapRedituable; 
+    public Heap<Traslado> heapAntiguo;    
     private ArrayList<Integer> mayorGanancia; 
     private  ArrayList<Integer> mayorPerdida;  
-    private MaxHeap<Ciudad> heapSuperavit;
+    private Heap<Ciudad> heapSuperavit;
     private  int mayorSuperavit;
     private int cantGanancia; 
     private int cantTraslados;
@@ -26,13 +25,23 @@ public class BestEffort {
             ciudades[i] = new Ciudad(i, 0, 0, 0);
         }
 
-        Comparator<Traslado> comparadorPorGN =Comparator.comparing(Traslado::getGananciaNeta);
-        this.heapRedituable = new MaxHeap<>(comparadorPorGN, traslados); //O(|T|)
-        Comparator<Traslado> timeStampComparar =Comparator.comparing(Traslado::getTimestamp);
-         this.heapAntiguo = new MinHeap<>(timeStampComparar, traslados); //O(|T|)
+        // Comparator<Traslado> comparadorPorGN =Comparator.comparing(Traslado::getGananciaNeta);
+        // this.heapRedituable = new MaxHeap<>(comparadorPorGN, traslados); //O(|T|)
+        // Comparator<Traslado> timeStampComparar =Comparator.comparing(Traslado::getTimestamp);
+        //  this.heapAntiguo = new MinHeap<>(timeStampComparar, traslados); //O(|T|)
         Comparator<Ciudad> comparadorPorSuperavit = Comparator.comparing(Ciudad::getSuperavit);
-        this.heapSuperavit = new MaxHeap<>(comparadorPorSuperavit, ciudades);//O(|C|)
-          
+        this.heapSuperavit = new Heap<>(comparadorPorSuperavit, ciudades);//O(|C|)
+          // Max-Heap por ganancia neta:
+        Comparator<Traslado> comparadorPorGN = Comparator.comparing(Traslado::getGananciaNeta);
+        this.heapRedituable = new Heap<>(comparadorPorGN, traslados);
+
+        // Min-Heap por timestamp:
+        Comparator<Traslado> timeStampComparar = Comparator.comparing(Traslado::getTimestamp).reversed();
+       this.heapAntiguo = new Heap<>(timeStampComparar, traslados);
+        setearPosicionesRedituable(this.heapRedituable.obtenerPrioridades());
+
+        setearPosicionesAntiguo(this.heapAntiguo.obtenerPrioridades());
+        
         this.mayorSuperavit = 0;
         this.mayorGanancia = new ArrayList<Integer>(); 
         this.mayorPerdida = new ArrayList<Integer>();
@@ -47,21 +56,44 @@ public class BestEffort {
             this.heapRedituable.encolar(traslado); //O(log(T))
             this.heapAntiguo.encolar(traslado); //O(log(T))
         } 
+        ArrayList<Traslado> posRedituables = this.heapRedituable.elementos();
+
+        ArrayList<Traslado> posAntiguo = this.heapAntiguo.elementos();
+        registrarPosIniciales(posRedituables);
+        registrarPosInicialesAntig(posAntiguo);
+        
+       
     } //complejidad: O(|traslados|log(t))
 
-   
+   public void registrarPosIniciales( ArrayList<Traslado> posiciones){
+    for (int i = 0; i < posiciones.size();i++) {
+        Traslado t = posiciones.get(i);
+        t.setPosRedituable(i);
+    }
+   }
 
+   
+   public void registrarPosInicialesAntig( ArrayList<Traslado> posiciones){
+    for (int i = 0; i < posiciones.size();i++) {
+        Traslado t = posiciones.get(i);
+        t.setPosHeapAntiguo(i);
+    }
+   }
     public int[] despacharMasRedituables(int n){
         int i = 0;
         int[] res = new int[n];  //O(n)
         int[] indices = new int[n];//O(n)
 
         while (i < n && heapRedituable.getCardinal() > 0){
-            Traslado t = heapRedituable.desencolar();  //O(log(T))
+            Tupla<Traslado,ArrayList<Integer>> info  = heapRedituable.desencolar();  //O(log(T))
+            Traslado t = info.getPrimero();
+            
             res[i] = t.getId();    
             actualizarInfoCiudad(t);    //O(Log(C))   
            indices[i] =t.getPosAntiguo();
-            i++;
+           setearPosicionesRedituable(info.getSegundo()); 
+           i++;
+
             
         } //Complejidad bucle = O(n(log(T) + log(C)))
        
@@ -78,10 +110,19 @@ public class BestEffort {
         int[] res = new int[n]; //renombrar
         int[] indices = new int[n];
         while (i< n && heapAntiguo.getCardinal() > 0){
-            Traslado t  = this.heapAntiguo.desencolar(); // O(log(T))
+            /*Tupla<Traslado,ArrayList<Integer>> info  = heapRedituable.desencolar();  //O(log(T))
+            Traslado t = info.getPrimero();
+            
+            res[i] = t.getId();    
+            actualizarInfoCiudad(t);    //O(Log(C))   
+           indices[i] =t.getPosAntiguo();
+           setearPosicionesRedituable(info.getSegundo());  */
+           Tupla<Traslado,ArrayList<Integer>> info =
+           heapAntiguo.desencolar();
+            Traslado t  = info.getPrimero();
               // O(1)
             indices[i]=t.getPosRedituable();
-            
+            setearPosicionesAntiguo(info.getSegundo());
             res[i] = t.getId();    
             actualizarInfoCiudad(t);    //O(Log(C)) 
             i++;
@@ -254,6 +295,37 @@ public class BestEffort {
        
     //O(1)
     }
+
+    private void setearPosicionesRedituable(ArrayList<Integer> posiciones){
+        for (int pos : posiciones) {
+            Traslado traslado = heapRedituable.obtener(pos);
+            traslado.setPosRedituable(pos);
+        }
+    }
+
+    private void setearPosicionesAntiguo(ArrayList<Integer> posiciones){
+        for (int pos : posiciones) {
+            Traslado traslado = heapAntiguo.obtener(pos);
+            traslado.setPosHeapAntiguo(pos);;
+        }
+    }
+    private void setearPosicionesSuperavit(ArrayList<Integer> posiciones){
+        for (int pos : posiciones) {
+            Ciudad ciudad = heapSuperavit.obtener(pos);
+            ciudad.setPosHeapSuperavit(pos);;
+        }
+    }
+
+
+
+    /*public void reindexar(int posicion) {
+        // ...
+        for (int i = posicion; i < heapRedituable.getCardinal(); i++) {
+            Traslado traslado = heapRedituable.get(i);
+            traslado.actualizarPosicion(i);
+        }
+    }
+ */
 }    
     
         
