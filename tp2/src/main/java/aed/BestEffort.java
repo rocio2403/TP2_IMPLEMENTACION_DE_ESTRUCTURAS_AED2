@@ -12,6 +12,8 @@ public class BestEffort {
     private  ArrayList<Integer> mayorPerdida;  
     private Heap<Ciudad> heapSuperavit;
     private  int mayorSuperavit;
+    private int maxGanancia;
+    private int maxPerdida;
     private int cantGanancia; 
     private int cantTraslados;
 
@@ -41,6 +43,9 @@ public class BestEffort {
         this.mayorGanancia = new ArrayList<Integer>(); 
         this.mayorPerdida = new ArrayList<Integer>();
         
+        this.maxGanancia = -1;
+        this.maxPerdida = -1;
+
         this.cantGanancia = 0;
         this.cantTraslados = 0;
        
@@ -110,16 +115,18 @@ public class BestEffort {
    public int[] despacharMasRedituables(int n){
         int i = 0;
         int[] res = new int[n];  //O(n)
-        int[] indices = new int[n];//O(n) inicializo la lista de los indices de los traslados que debo borrar
-
+      //  int[] indices = new int[n];//O(n) inicializo la lista de los indices de los traslados que debo borrar
+    ArrayList<Integer> indices = new ArrayList<>();
         while (i < n && heapRedituable.getCardinal() > 0){
 
             Tupla<Traslado,ArrayList<Integer>> info  = heapRedituable.desencolar();  //O(log(T))
             Traslado t = info.getPrimero();
+            actualizarMayorGanancia(t);
+            actualizarMayorPerdida(t);
             actualizarInfoCiudad(t);    //O(Log(C)).La complejidad proviene del superavit.  
             res[i] = t.getId();    
-           
-           indices[i] =t.getPosAntiguo();
+           indices.add(t.getPosAntiguo());
+          // indices[i] =t.getPosAntiguo();
            setearPosicionesRedituable(info.getSegundo()); 
               
         //    actualizarListaGanancia(t); //los meti en actualizar info ciudades, al parecer el problema esta en que actualiza la info de la ciudad, pero es como sino, entonces no compara bien, cuando lo hago despues, no hay problema
@@ -138,13 +145,17 @@ public class BestEffort {
     public int[] despacharMasAntiguos(int n){
         int i = 0;
         int[] res = new int[n]; 
-        int[] indices = new int[n];
+        ArrayList<Integer> indices = new ArrayList<>();
+        //int[] indices = new int[n];
         while (i< n && heapAntiguo.getCardinal() > 0){
            Tupla<Traslado,ArrayList<Integer>> info = heapAntiguo.desencolar();
             Traslado t  = info.getPrimero();// O(1)
+            actualizarMayorGanancia(t);
+            actualizarMayorPerdida(t);
             actualizarInfoCiudad(t);    //O(Log(C)) 
            
-            indices[i]=t.getPosRedituable();
+            indices.add(t.getPosRedituable());
+          //  indices[i]=t.getPosRedituable();
             
             setearPosicionesAntiguo(info.getSegundo());
             
@@ -195,6 +206,7 @@ public class BestEffort {
     
   
     private  void actualizarInfoCiudad(Traslado t) {
+        
         int indiceCiudadGana = t.getOrigen(); //O(1)
         int monto = t.getGananciaNeta();//O(1)
         int indiceCiudadPierde = t.getDestino();//O(1)
@@ -205,8 +217,8 @@ public class BestEffort {
         cantGanancia += monto;//O(1)
         cantTraslados++;//O(1)     
 
-        actualizarListaGanancia(indiceCiudadGana); //ACA ESTA EL PROBLEMA
-        actualizarListaPerdida(indiceCiudadPierde);//ACA ESTA EL PROBLEMA
+        // actualizarListaGanancia(indiceCiudadGana); //ACA ESTA EL PROBLEMA
+        // actualizarListaPerdida(indiceCiudadPierde);//ACA ESTA EL PROBLEMA
 
         ArrayList<Integer> cambios1 = heapSuperavit.modificarEnHeap(ciudades[indiceCiudadGana].getPosHeapSuperavit());//O(logC)
         ArrayList<Integer> cambios2 = heapSuperavit.modificarEnHeap(ciudades[indiceCiudadPierde].getPosHeapSuperavit());//O(logC)
@@ -215,46 +227,48 @@ public class BestEffort {
         setearPosicionesSuperavit(cambios2); //segun debugguer setea bien
         
         maxSuperavit();
-        
-      
+
     } 
 
-
+//ENCONTRE EL BUG, ACTUALIZO Y SIEMPRE PREGUNTO POR LE PRIMERO, pero a ese primero ya se le actualizo
+//ESTE NO LOS USO, DESPUES DE DEBUGGUEAR SIGO
     private void actualizarListaPerdida(int indiceCiudad){
         //si esta vacia, no tengo con que compara entonces agrego
-        int monto = this.ciudades[indiceCiudad].getPerdidas();
+        int monto = this.ciudades[indiceCiudad].getPerdidas(); //es por lo que quiero ver si tengo que agregar o no
         if (mayorPerdida.isEmpty()) {
             mayorPerdida.add(indiceCiudad);
             return;
         }
         //aca separo en casos, si es mayor clear() O(1) y agrego, si es igual,agrego
-        int maxPerdida = this.ciudades[this.mayorPerdida.get(0)].getPerdidas();
-        if(monto > maxPerdida){
+        else if(monto > this.maxPerdida){
             this.mayorPerdida.clear();//O(1)
             this.mayorPerdida.add(indiceCiudad);
-        }else if (monto == maxPerdida && !mayorPerdida.contains(this.ciudades[indiceCiudad].getId())) {
+        }else if (monto == maxPerdida ) {
             this.mayorPerdida.add(indiceCiudad);
         }
+        this.maxPerdida = this.ciudades[this.mayorPerdida.get(0)].getPerdidas();
     }
     
     private void actualizarListaGanancia(int indiceCiudad){
         int monto = this.ciudades[indiceCiudad].getGanancias();
+      
         if (mayorGanancia.isEmpty()) {
             mayorGanancia.add(indiceCiudad);
             return;
         }
         //aca separo en casos, si es mayor clear() O(1) y agrego, si es igual,agrego
-        int maxGanancia = this.ciudades[this.mayorGanancia.get(0)].getGanancias();
-        if(monto > maxGanancia){
+       else if(monto > this.maxGanancia){
             this.mayorGanancia.clear();//O(1)
             this.mayorGanancia.add(indiceCiudad);
-        }else if (monto == maxGanancia  && !mayorGanancia.contains(this.ciudades[indiceCiudad].getId()) ) {
+        }else if (monto == this.maxGanancia ) {
             this.mayorGanancia.add(indiceCiudad);
         }
+        this.maxGanancia = this.ciudades[this.mayorGanancia.get(0)].getGanancias();
+       
     }
 
   
-    private void sincronizarHeap(Heap<Traslado> heap, int[] indices) {
+    private void sincronizarHeap(Heap<Traslado> heap,ArrayList<Integer> indices){ //int[] indices
         for (int index : indices) {
             heap.eliminarPorPosicion(index); 
         }
@@ -281,44 +295,34 @@ public class BestEffort {
     }
 
  
-//ANDA, LO USO COMO MODELO PARA ENCONTRAR ALGO QUE NO SEA LINEAL. ESTE FUNCIONA BIEN
-  public void actualizarListaGananciasYPerdidas() { 
-        int mayorGananciaActual = -1; 
-        int mayorPerdidaActual = -1;
-        mayorGanancia.clear();
-        mayorPerdida.clear();
-        if (!mayorGanancia.isEmpty()) {
-            int idCiudadGanancia = mayorGanancia.get(0);
-            mayorGananciaActual = ciudades[idCiudadGanancia].getGanancias();
-        }
-        if (!mayorPerdida.isEmpty()) {
-            int idCiudadPerdida = mayorPerdida.get(0);
-            mayorPerdidaActual = ciudades[idCiudadPerdida].getPerdidas();
-        }
-    
-        for (Ciudad ciudad : ciudades) { // O(C)
-            int ganancia = ciudad.getGanancias();
-            if (ganancia > mayorGananciaActual) {
-                mayorGananciaActual = ganancia;
-                mayorGanancia.clear(); 
-                mayorGanancia.add(ciudad.getId());
-            } else if (ganancia == mayorGananciaActual && !mayorGanancia.contains(ciudad.getId())) {
-                
-                mayorGanancia.add(ciudad.getId());
-            }
-    
-            int perdida = ciudad.getPerdidas();
-            if (perdida > mayorPerdidaActual) {
-                mayorPerdidaActual = perdida;
-                mayorPerdida.clear(); 
-                mayorPerdida.add(ciudad.getId());
-            } else if (perdida == mayorPerdidaActual && !mayorPerdida.contains(ciudad.getId())) {
-                mayorPerdida.add(ciudad.getId());
-            }
-        }
-    }
-    
 
+
+    //==============================================================
+    // PRUEBO OTRO ENFOQUE
+    private void actualizarMayorGanancia(Traslado traslado){ // Complejidad: O(1)
+            int numeroDeCiudadOrigen = ciudades[traslado.getOrigen()].getId();
+            int gananciaTotalOrigen = ciudades[traslado.getOrigen()].getGanancias() + traslado.getGananciaNeta();
+           
+            if (mayorGanancia.isEmpty() || gananciaTotalOrigen == ciudades[mayorGanancia.get(0)].getGanancias())    
+                mayorGanancia.add(numeroDeCiudadOrigen);   
+            else if (gananciaTotalOrigen > ciudades[mayorGanancia.get(0)].getGanancias()){                                  
+                mayorGanancia.clear();
+                mayorGanancia.add(numeroDeCiudadOrigen); 
+            } 
+        }
+        
+        private void actualizarMayorPerdida(Traslado traslado){  // Complejidad: O(1)
+            
+            int numeroDeCiudadDestino = ciudades[traslado.getDestino()].getId();
+            int perdidaTotalDestino = ciudades[traslado.getDestino()].getPerdidas() + traslado.getGananciaNeta();
+            if (mayorPerdida.isEmpty() || perdidaTotalDestino == ciudades[mayorPerdida.get(0)].getPerdidas())
+                mayorPerdida.add(numeroDeCiudadDestino);
+            else if (perdidaTotalDestino > ciudades[mayorPerdida.get(0)].getPerdidas()){
+                mayorPerdida.clear();
+                mayorPerdida.add(numeroDeCiudadDestino);
+            } 
+        }
+    
   //   private void sincronizarHeapAntiguo(int[] indices){
     //     //en esta funcion le paso los elementos a borrar
     //     for(int index : indices){
@@ -333,6 +337,43 @@ public class BestEffort {
     //         this.heapRedituable.eliminarPorPosicion(index);
     //     }
     // }
+    //ANDA, LO USO COMO MODELO PARA ENCONTRAR ALGO QUE NO SEA LINEAL. ESTE FUNCIONA BIEN
+//   public void actualizarListaGananciasYPerdidas() { 
+//     int mayorGananciaActual = -1; 
+//     int mayorPerdidaActual = -1;
+//     mayorGanancia.clear();
+//     mayorPerdida.clear();
+//     if (!mayorGanancia.isEmpty()) {
+//         int idCiudadGanancia = mayorGanancia.get(0);
+//         mayorGananciaActual = ciudades[idCiudadGanancia].getGanancias();
+//     }
+//     if (!mayorPerdida.isEmpty()) {
+//         int idCiudadPerdida = mayorPerdida.get(0);
+//         mayorPerdidaActual = ciudades[idCiudadPerdida].getPerdidas();
+//     }
+
+//     for (Ciudad ciudad : ciudades) { // O(C)
+//         int ganancia = ciudad.getGanancias();
+//         if (ganancia > mayorGananciaActual) {
+//             mayorGananciaActual = ganancia;
+//             mayorGanancia.clear(); 
+//             mayorGanancia.add(ciudad.getId());
+//         } else if (ganancia == mayorGananciaActual && !mayorGanancia.contains(ciudad.getId())) {
+            
+//             mayorGanancia.add(ciudad.getId());
+//         }
+
+//         int perdida = ciudad.getPerdidas();
+//         if (perdida > mayorPerdidaActual) {
+//             mayorPerdidaActual = perdida;
+//             mayorPerdida.clear(); 
+//             mayorPerdida.add(ciudad.getId());
+//         } else if (perdida == mayorPerdidaActual && !mayorPerdida.contains(ciudad.getId())) {
+//             mayorPerdida.add(ciudad.getId());
+//         }
+//     }
+// }
+
 }    
     
         

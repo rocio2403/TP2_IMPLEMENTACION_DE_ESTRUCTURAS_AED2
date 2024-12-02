@@ -113,7 +113,7 @@ public class BestEffortTests {
         sis.despacharMasAntiguos(3);
         assertSetEquals(new ArrayList<>(Arrays.asList(1, 6)), sis.ciudadesConMayorGanancia());
         assertSetEquals(new ArrayList<>(Arrays.asList(3)), sis.ciudadesConMayorPerdida());
-
+  //ACA EN MEDIO BORRA Y NO SE PORQUE (SE VE EN CARDINAL DE LOS HEAPS) pero antes de aca, en los asserts estan bien sincronizados
         sis.despacharMasAntiguos(1);
         assertSetEquals(new ArrayList<>(Arrays.asList(1, 6)), sis.ciudadesConMayorGanancia());
         assertSetEquals(new ArrayList<>(Arrays.asList(3)), sis.ciudadesConMayorPerdida());
