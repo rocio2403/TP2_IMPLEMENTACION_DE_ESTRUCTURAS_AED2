@@ -1,6 +1,6 @@
 package aed;
-
-public class Traslado implements Comparable<Traslado> {
+//implements Comparable<Traslado> 
+public class Traslado {
     
     private int id;
     private int origen;
@@ -59,13 +59,13 @@ public class Traslado implements Comparable<Traslado> {
         return String.valueOf(this.id);
     }
 
-    //compareTo, armo para minheap y maxheap especificamente, en comparatorTraslados
-    @Override
-    public int compareTo(Traslado other) {
-        if (this.gananciaNeta != other.gananciaNeta) {
-            return Integer.compare(other.gananciaNeta, this.gananciaNeta);
-        } else {
-            return Integer.compare(this.id, other.id);
-        }
-    }
+    // //compareTo, armo para minheap y maxheap especificamente, en comparatorTraslados
+    // @Override
+    // public int compareTo(Traslado other) {
+    //     if (this.gananciaNeta != other.gananciaNeta) {
+    //         return Integer.compare(other.gananciaNeta, this.gananciaNeta);
+    //     } else {
+    //         return Integer.compare(this.id, other.id);
+    //     }
+    // }
 }
