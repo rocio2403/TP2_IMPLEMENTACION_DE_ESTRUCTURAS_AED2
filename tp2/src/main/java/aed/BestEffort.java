@@ -121,10 +121,12 @@ public class BestEffort {
 
             Tupla<Traslado,ArrayList<Integer>> info  = heapRedituable.desencolar();  //O(log(T))
             Traslado t = info.getPrimero();
+
             actualizarMayorGanancia(t);
             actualizarMayorPerdida(t);
             actualizarInfoCiudad(t);    //O(Log(C)).La complejidad proviene del superavit.  
             res[i] = t.getId();    
+           
            indices.add(t.getPosAntiguo());
           // indices[i] =t.getPosAntiguo();
            setearPosicionesRedituable(info.getSegundo()); 
@@ -135,7 +137,7 @@ public class BestEffort {
             
         } //Complejidad bucle = O(n(log(T) + log(C)))
        
-         sincronizarHeap(this.heapAntiguo,indices); //o(nlog(T))
+        sincronizarHeap(this.heapAntiguo,indices); //o(nlog(T))
         // actualizarListaGananciasYPerdidas(); //O(|C|) //DEBE SER CONSTANTE.ACA,USANDO ESTE, PASAN LOS TEST
     
         return res ;
@@ -154,6 +156,7 @@ public class BestEffort {
             actualizarMayorPerdida(t);
             actualizarInfoCiudad(t);    //O(Log(C)) 
            
+            //this.heapRedituable.eliminarPorPosicion(t.getPosRedituable());
             indices.add(t.getPosRedituable());
           //  indices[i]=t.getPosRedituable();
             
@@ -164,7 +167,7 @@ public class BestEffort {
             
         }   //Complejidad bucle = O(n(log(T) + log(C)))
      
-        sincronizarHeap(this.heapRedituable,indices);
+       sincronizarHeap(this.heapRedituable,indices);
       // actualizarListaGananciasYPerdidas(); //O(|C|)
        
         
@@ -217,9 +220,6 @@ public class BestEffort {
         cantGanancia += monto;//O(1)
         cantTraslados++;//O(1)     
 
-        // actualizarListaGanancia(indiceCiudadGana); //ACA ESTA EL PROBLEMA
-        // actualizarListaPerdida(indiceCiudadPierde);//ACA ESTA EL PROBLEMA
-
         ArrayList<Integer> cambios1 = heapSuperavit.modificarEnHeap(ciudades[indiceCiudadGana].getPosHeapSuperavit());//O(logC)
         ArrayList<Integer> cambios2 = heapSuperavit.modificarEnHeap(ciudades[indiceCiudadPierde].getPosHeapSuperavit());//O(logC)
         
@@ -230,7 +230,7 @@ public class BestEffort {
 
     } 
 
-//ENCONTRE EL BUG, ACTUALIZO Y SIEMPRE PREGUNTO POR LE PRIMERO, pero a ese primero ya se le actualizo
+//ENCONTRE EL BUG, ACTUALIZO Y SIEMPRE PREGUNTO POR el PRIMERO, pero a ese primero ya se le actualizo
 //ESTE NO LOS USO, DESPUES DE DEBUGGUEAR SIGO
     private void actualizarListaPerdida(int indiceCiudad){
         //si esta vacia, no tengo con que compara entonces agrego
@@ -267,13 +267,25 @@ public class BestEffort {
        
     }
 
-  
     private void sincronizarHeap(Heap<Traslado> heap,ArrayList<Integer> indices){ //int[] indices
-        for (int index : indices) {
-            heap.eliminarPorPosicion(index); 
+        for(int i  = 0; i<indices.size();i++){
+            heap.eliminarPorPosicion(indices.get(i)); 
         }
+    } 
+
+
+    //CADA VEZ QUE BORRO ALGO, ESTOY MODIFICANDO POSICIONES, POR LO QUE DEBERIA SETEARLO CADA VEZ
+    private void sincornizarRedituable( int pos){
+        ArrayList<Integer> cambios = this.heapRedituable.eliminarPorPosicion(pos);
+        setearPosicionesRedituable(cambios);
+        
     }
     
+    private void sincronizarAntiguo( int pos){
+        ArrayList<Integer> cambios = this.heapAntiguo.eliminarPorPosicion(pos);
+        setearPosicionesAntiguo(cambios);
+        
+    }
  
 
 
