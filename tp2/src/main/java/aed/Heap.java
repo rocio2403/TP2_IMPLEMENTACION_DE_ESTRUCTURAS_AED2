@@ -62,17 +62,26 @@ public class Heap<T> {
     
     public ArrayList<Integer> eliminarPorPosicion(int posicion) {
         ArrayList<Integer> cambios = new ArrayList<>();
-        if (esPosValida(posicion)) {
+        //si pos es igual al size -1, que retorne vacio
+        if (esPosValida(posicion) && posicion != this.cardinal-1) {
             this.heap.set(posicion, this.heap.get(cardinal - 1));
             cardinal--;
             reheap(posicion,cambios);
             
         this.heap.remove(cardinal); 
-
-        }
         return cambios;
+        }else if (esPosValida(posicion)) {
+            this.heap.set(posicion, this.heap.get(cardinal - 1));
+            cardinal--;
+            reheap(posicion,cambios);
+        
+        }
+        ArrayList<Integer> vacio = new ArrayList<>();
+        return vacio;
+       // return cambios;
     }
- 
+   
+    
     public ArrayList<Integer> encolar(T elem) {
         ArrayList<Integer> cambios = new ArrayList<>();
         if (cardinal >= heap.size()) {
@@ -127,6 +136,8 @@ public class Heap<T> {
         cambios.add(elem);
         
     }
+
+    
     public ArrayList<Integer> modificarEnHeap(int posicion) {
         // Complejidad: O(log n)
         ArrayList<Integer> cambios = new ArrayList<>();
