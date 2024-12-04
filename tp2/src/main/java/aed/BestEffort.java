@@ -100,12 +100,11 @@ public class BestEffort {
             setearPosicionesAntiguo(info.getSegundo());
             
             res[i] = t.getId();    
-            sincornizarRedituable(t.getPosRedituable());
+            sincronizarRedituable(t.getPosRedituable());
             i++;
             
         }   //Complejidad bucle = O(n(log(T) + log(C)))
-     //sincronizarHeapRedituable(res); 
-     //actualizarListaGananciasYPerdidas();   
+      
      return res ;
     } //Complejidad = O(n(Log(T) + log(C))) =  O(n(logT + logC))
 
@@ -254,14 +253,16 @@ public class BestEffort {
     }
 
     //CADA VEZ QUE BORRO ALGO, ESTOY MODIFICANDO POSICIONES, POR LO QUE DEBERIA SETEARLO CADA VEZ
-    private void sincornizarRedituable( int pos){
-        ArrayList<Integer> cambios = this.heapRedituable.eliminarPorPosicion(pos);
-        if(cambios.size()!=0){
-        setearPosicionesRedituable(cambios);
-        }
+    private void sincronizarRedituable( int pos){
+          
+            ArrayList<Integer> cambios = this.heapRedituable.eliminarPorPosicion(pos);
+            if(cambios.size()!=0){
+            setearPosicionesRedituable(cambios);
+            }
     }
     
     private void sincronizarAntiguo( int pos){
+       
         ArrayList<Integer> cambios = this.heapAntiguo.eliminarPorPosicion(pos);
         if(cambios.size()!=0){
         setearPosicionesAntiguo(cambios);

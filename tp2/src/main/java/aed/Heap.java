@@ -59,50 +59,59 @@ public class Heap<T> {
     public int getCardinal() { 
         return cardinal;
     }
-    
     public ArrayList<Integer> eliminarPorPosicion(int posicion) {
         ArrayList<Integer> cambios = new ArrayList<>();
-        //si pos es igual al size -1, que retorne vacio
-        if (esPosValida(posicion) && posicion != this.cardinal-1) {
-            this.heap.set(posicion, this.heap.get(cardinal - 1));
-            cardinal--;
-            reheap(posicion,cambios);
-            
-        this.heap.remove(cardinal); 
-        return cambios;
-        }else if (esPosValida(posicion)) {
-            this.heap.set(posicion, this.heap.get(cardinal - 1));
-            cardinal--;
-            reheap(posicion,cambios);
         
+        if (!esPosValida(posicion)) {
+            return cambios; 
         }
-        ArrayList<Integer> vacio = new ArrayList<>();
-        return vacio;
-       // return cambios;
+        
+        if (posicion == this.cardinal - 1) {
+            borrarUltimo();
+            return cambios; 
+        }
+    
+        this.heap.set(posicion, this.heap.get(cardinal - 1));
+        cardinal--;
+        reheap(posicion, cambios);
+        this.heap.remove(cardinal);
+    
+        return cambios;
     }
+    
+    
    
+    public void borrarUltimo(){
+        this.heap.remove(cardinal-1);
+        this.cardinal--;
+    }
     
     public ArrayList<Integer> encolar(T elem) {
         ArrayList<Integer> cambios = new ArrayList<>();
         if (cardinal >= heap.size()) {
-            heap.add(elem); // Agrega el elemento al final si no hay espacio
+            heap.add(elem); 
         } else {
-            heap.set(cardinal, elem); // Reutiliza el espacio existente
+            heap.set(cardinal, elem); 
         }
-        siftUp(cardinal, cambios); // Ajusta la posición del nuevo elemento
+        siftUp(cardinal, cambios); 
         cardinal++;
-        return cambios; // Devuelve la lista de posiciones afectadas
+        return cambios; 
     }
     
     public Tupla<T,ArrayList<Integer>> desencolar() {
         ArrayList<Integer> cambios = new ArrayList<>();
         T raiz = null;
-        if (!isEmpty()) {
+        if (this.cardinal > 1) {
             raiz = this.heap.get(0);
             this.heap.set(0, this.heap.get(cardinal - 1));
             this.heap.remove(cardinal-1);
             this.cardinal--;
             reheap(0,cambios);
+        }else if (this.cardinal > 0) {
+            raiz = this.heap.get(0);
+            this.heap.remove(cardinal-1);
+            this.cardinal--;
+           
         }
         Tupla<T,ArrayList<Integer>> res = new Tupla<>(raiz,cambios);
         return res; //retorno lista de cambios para no romper encapsulamiento 

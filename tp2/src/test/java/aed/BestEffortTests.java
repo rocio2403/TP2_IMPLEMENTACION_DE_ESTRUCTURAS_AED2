@@ -113,10 +113,6 @@ public class BestEffortTests {
         sis.despacharMasAntiguos(3);
         assertSetEquals(new ArrayList<>(Arrays.asList(1, 6)), sis.ciudadesConMayorGanancia());
         assertSetEquals(new ArrayList<>(Arrays.asList(3)), sis.ciudadesConMayorPerdida());
-  //ACA EN MEDIO BORRA Y NO SE PORQUE (SE VE EN CARDINAL DE LOS HEAPS) pero antes de aca, en los asserts estan bien sincronizados.
-  //CON EL DEBUGGER VI QUE EN LA LISTA DE INDICES A BORRAR, NO BORRA DE MAS REDITUABLES,EL ULTIMO DE LA LISTA INDICES
-
-  //BUG ENCONTRADO, EN ELIMINAR POR POSICION, NO SE ACTUALIZAN LAS POSICIONES, DEBERIA HACER ESO, CADA VEZ QUE ELIMINO
         sis.despacharMasAntiguos(1);
         assertSetEquals(new ArrayList<>(Arrays.asList(1, 6)), sis.ciudadesConMayorGanancia());
         assertSetEquals(new ArrayList<>(Arrays.asList(3)), sis.ciudadesConMayorPerdida());
