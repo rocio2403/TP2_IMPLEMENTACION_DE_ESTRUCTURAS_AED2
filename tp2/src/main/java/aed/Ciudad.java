@@ -1,5 +1,9 @@
 package aed;
-
+/*Materia : Algoritmos y Estructuras de datos 2
+ * Segundo cuatrimestre 2024 
+ * Reentrega trabajo practico
+ * Grupo BYMRO.
+ */
 public class Ciudad implements Comparable<Ciudad> {
     private int id;
     private int perdidas;

@@ -1,19 +1,42 @@
 package aed;
-
+/*Materia : Algoritmos y Estructuras de datos 2
+ * Segundo cuatrimestre 2024 
+ * Reentrega trabajo practico
+ * Grupo BYMRO.
+ */
 import java.util.ArrayList;
 import java.util.Comparator;
+
+/*          ========== PRINCIPALES CAMBIOS DE LA REENTREGA ===============
+ * Usamos un heap generico en lugar de discriminar entre maxHeap y minHeap
+ * En la implementacion de heap usamos un arreglo redimensionable.
+ * Para actualizar las posiciones, utilizamos la idea original presentada en el laboratorio: que las operaciones del heap devuelvan una lista de cambios = un historial de swaps,respetando asi el encapsulamiento.
+ * 
+ * Añadimos una clase tuplas.
+ * 
+ * Realizamos los test utilizando asserts
+ * 
+ * Actualizamos las listas de ganancias y perdidas en complejidad constante, el error anterior provenia de que siempre actualizabamos primero y preguntabamos la ganancia con los ids de la lista, siendo estos ya actualizados, por lo que siempre veia la ganancia/perdida actualizada y no comparaba bien.Por eso, realizamos esas operaciones previas a actualizar info de ciudades.
+ * 
+ * Descubrimos que el hecho de que no pasara el test de gananciaPromedioPorTraslado (considerando la nueva forma de actualizar posiciones) proviene de no haber considerado casos bordes, como eliminar el ultimo o desencolar cuando el heap tiene un solo elemento.
+ * 
+ * Dejamos comentada la complejidad en cada metodo.
+ */
+
+
 
 public class BestEffort {
    
     private Ciudad[] ciudades;  
-    public  Heap<Traslado> heapRedituable; 
-    public Heap<Traslado> heapAntiguo;    
+
+    private Heap<Traslado> heapRedituable; 
+    private Heap<Traslado> heapAntiguo;    
+    private Heap<Ciudad> heapSuperavit;
+    
     private ArrayList<Integer> mayorGanancia; 
     private  ArrayList<Integer> mayorPerdida;  
-    private Heap<Ciudad> heapSuperavit;
+    
     private  int mayorSuperavit;
-    private int maxGanancia;
-    private int maxPerdida;
     private int cantGanancia; 
     private int cantTraslados;
 
@@ -23,21 +46,21 @@ public class BestEffort {
         this.ciudades = new Ciudad[cantCiudades];
         for(int i = 0;i<cantCiudades;i++){
             ciudades[i] = new Ciudad(i, 0, 0, 0);
-        }
+        } //O(|C|)
 
-        //inicializo los heaps, con el constructor que toma un array.
+        //Costruimos los heaps utilizando el constructor que toma un arreglo
         Comparator<Ciudad> comparadorPorSuperavit = Comparator.comparing(Ciudad::getSuperavit);
         this.heapSuperavit = new Heap<>(comparadorPorSuperavit, ciudades);//O(|C|)
         
         Comparator<Traslado> comparadorPorGN = Comparator.comparing(Traslado::getGananciaNeta);
-        this.heapRedituable = new Heap<>(comparadorPorGN, traslados);
+        this.heapRedituable = new Heap<>(comparadorPorGN, traslados); //O(|T|)
 
         Comparator<Traslado> timeStampComparar = Comparator.comparing(Traslado::getTimestamp).reversed();
-        this.heapAntiguo = new Heap<>(timeStampComparar, traslados);
+        this.heapAntiguo = new Heap<>(timeStampComparar, traslados); //O(|T|)
         
-        //seteo posiciones iniciales.
-        inicializarPosicionesHeaps();
-        inicializarPosicionesSuperavit();
+        //seteamos posiciones iniciales
+        inicializarPosicionesHeaps(); //O(|T|)
+        inicializarPosicionesSuperavit(); //O(|C|)
        
         this.mayorSuperavit = 0;
         this.mayorGanancia = new ArrayList<Integer>(); 
@@ -48,67 +71,62 @@ public class BestEffort {
        
     }// Complejidad final = O(|C|+ |T|)
 
+
     public void registrarTraslados(Traslado[] traslados){
         for (Traslado traslado : traslados){  //O(|traslados|)
             this.heapRedituable.encolar(traslado); //O(log(T))
             this.heapAntiguo.encolar(traslado); //O(log(T))
         } 
         inicializarPosicionesHeaps();  //O(|T|),donde |T| = |traslados|
+
     } //complejidad: max {O(|T|) +  O(|traslados|log(t))} = O(|traslados|log(t)))
 
     
    public int[] despacharMasRedituables(int n){
         int i = 0;
         int[] res = new int[n];  //O(n)
-        ArrayList<Integer> indices = new ArrayList<>();
-        while (i < n && heapRedituable.getCardinal() > 0){
+         while (i < n && heapRedituable.getCardinal() > 0){
 
             Tupla<Traslado,ArrayList<Integer>> info  = heapRedituable.desencolar();  //O(log(T))
             Traslado t = info.getPrimero();
-
-            actualizarMayorGanancia(t);
-            actualizarMayorPerdida(t);
-             actualizarInfoCiudad(t);    //O(Log(C)).La complejidad proviene del superavit.  
+            actualizarEstadisticas(t); //O(Log(C)).La complejidad proviene de actualizar el heap de superavit  
             res[i] = t.getId();    
            
-           indices.add(t.getPosAntiguo());
-           setearPosicionesRedituable(info.getSegundo()); 
+           setearPosicionesRedituable(info.getSegundo()); //O(log(T)) ya que al eliminar un elemtno en un heap, hay a lo sumo log(t) cambios,pues un heap tiene altura logaritmica y se da como maximo un intercambio por nivel (hay Log(T) niveles)
           
-            sincronizarAntiguo(t.getPosAntiguo());
+           sincronizarAntiguo(t.getPosAntiguo()); //O(log(T))
            i++;
             
         } //Complejidad bucle = O(n(log(T) + log(C)))
-         //actualizarListaGananciasYPerdidas();
         return res ;
-       //Complejidad = O(n(Log(T)) + O(n(Log(T) + log(C))) =  O(n(logT + logC))
+       //Complejidad = O(n(Log(T) + log(C))) 
     }
 
     public int[] despacharMasAntiguos(int n){
         int i = 0;
         int[] res = new int[n]; 
-        ArrayList<Integer> indices = new ArrayList<>();
-        //int[] indices = new int[n];
-        while (i< n && heapAntiguo.getCardinal() > 0){
+         while (i< n && heapAntiguo.getCardinal() > 0){
            Tupla<Traslado,ArrayList<Integer>> info = heapAntiguo.desencolar();
+
             Traslado t  = info.getPrimero();// O(1)
-            actualizarMayorGanancia(t);
-            actualizarMayorPerdida(t);
-            actualizarInfoCiudad(t);    //O(Log(C)) 
-          
-            indices.add(t.getPosRedituable());
-          
-            setearPosicionesAntiguo(info.getSegundo());
+           
+            actualizarEstadisticas(t); //O(Log(C)).La complejidad proviene de actualizar el heap de superavit
+        
+            setearPosicionesAntiguo(info.getSegundo());//O(log(T)) ya que al eliminar un elemtno en un heap, hay a lo sumo log(t) cambios,pues un heap tiene altura logaritmica y se da como maximo un intercambio por nivel (hay Log(T) niveles)
             
-            res[i] = t.getId();    
-            sincronizarRedituable(t.getPosRedituable());
-            i++;
+            res[i] = t.getId();   //O(1) 
+           
+            sincronizarRedituable(t.getPosRedituable());//O(log(T))
+           
+            i++;//O(1)
             
         }   //Complejidad bucle = O(n(log(T) + log(C)))
       
      return res ;
-    } //Complejidad = O(n(Log(T) + log(C))) =  O(n(logT + logC))
+    } //Complejidad  O(n(logT + logC))
 
     
+    //Los siguientes metodos tienen complejidad constantes porque retornan variables privadas actualizadas con anterioridad, es decir,estan precalculadas.
     
     public int ciudadConMayorSuperavit(){
         return mayorSuperavit;//O(1)
@@ -130,14 +148,75 @@ public class BestEffort {
         return cantGanancia / cantTraslados; //O(1)
     }
     
+
     /* ====================================================================================
      *                  FUNCIONES AUXILIARES
      * ====================================================================================
     */
 
 
-    private  void actualizarInfoCiudad(Traslado t) {
+        /*==============================================================================
+     *                  SETEO DE POSICIONES
+     *==============================================================================
+     */
 
+     private void inicializarPosicionesHeaps() {
+        ArrayList<Traslado> elementosRedituable = this.heapRedituable.elementos(); //O(1)
+        ArrayList<Traslado> elementosAntiguo = this.heapAntiguo.elementos(); //O(1)
+       
+        for (int i = 0; i < elementosRedituable.size(); i++) { //O(|elementos|) donde |elementos| = T
+            Traslado t = elementosRedituable.get(i);  //O(1)
+            t.setPosRedituable(i);  //O(1)
+        }
+    
+        for (int i = 0; i < elementosAntiguo.size(); i++) { //O(|elementos|) donde |elementos| = T
+            Traslado t = elementosAntiguo.get(i); //O(1)
+            t.setPosHeapAntiguo(i); //O(1)
+        }
+    } //Complejidad : O(T), T cantidad de elementos de los heaps, en ambos casos son iguales pues son la cantidad de traslados.
+    
+    private void inicializarPosicionesSuperavit(){
+        ArrayList<Ciudad> elementosSuperavit = this.heapSuperavit.elementos(); //O(1)
+        for (int i = 0; i < elementosSuperavit.size(); i++) { //O(|elementos|) donde |elementos| = C, c cantidad de ciudades
+            Ciudad c = elementosSuperavit.get(i);//O(1)
+            c.setPosHeapSuperavit(i);//O(1)
+        }
+    } //Complejidad O(|C|)
+
+
+    private void setearPosicionesRedituable(ArrayList<Integer> posiciones){
+    for (int pos : posiciones) { //O(|posiciones|)
+        Traslado traslado = heapRedituable.obtener(pos); //O(1)
+        traslado.setPosRedituable(pos); //O(1)
+    }
+  } //Complejidad : O(|posiciones|)
+  //si bien tienen complejidad "lineal", en los metodos de despacharMasRedituables y despacharMasAntiguos, esta la justificacion de porque cumple la complejidad.
+
+    private void setearPosicionesAntiguo(ArrayList<Integer> posiciones){
+    for (int pos : posiciones) {//O(|posiciones|)
+        Traslado traslado = heapAntiguo.obtener(pos);//O(1)
+        traslado.setPosHeapAntiguo(pos);//O(1)
+    }//Complejidad : O(|posiciones|)
+  //si bien tienen complejidad "lineal", en los metodos de despacharMasRedituables y despacharMasAntiguos, esta la justificacion de porque cumple la complejidad.
+}
+    private void setearPosicionesSuperavit(ArrayList<Integer> posiciones){
+        for (int pos : posiciones) {//O(|posiciones|)
+            Ciudad ciudad = heapSuperavit.obtener(pos);//O(1)
+            ciudad.setPosHeapSuperavit(pos);//O(1)
+        }
+}   //Complejidad : O(|posiciones|)
+//si bien tienen complejidad "lineal", en los metodos de despacharMasRedituables y despacharMasAntiguos, esta la justificacion de porque cumple la complejidad.
+
+
+/*======================================================================================
+ *                  ACTUALIZACION DE ESTADISTICAS
+ * =====================================================================================
+ */
+
+    private  void actualizarEstadisticas(Traslado t) {
+        //actualizamos primero las ganancias y perdidas antes de actualizar la informacion de las ciudades.
+        actualizarMayorGanancia(t); //O(1)
+        actualizarMayorPerdida(t);//O(1)
         
         int indiceCiudadGana = t.getOrigen(); //O(1)
         int monto = t.getGananciaNeta();//O(1)
@@ -152,220 +231,79 @@ public class BestEffort {
         ArrayList<Integer> cambios1 = heapSuperavit.modificarEnHeap(ciudades[indiceCiudadGana].getPosHeapSuperavit());//O(logC)
         ArrayList<Integer> cambios2 = heapSuperavit.modificarEnHeap(ciudades[indiceCiudadPierde].getPosHeapSuperavit());//O(logC)
         
-        setearPosicionesSuperavit(cambios1);
-        setearPosicionesSuperavit(cambios2); //segun debugguer setea bien
+        setearPosicionesSuperavit(cambios1); //O(logC) 
+        setearPosicionesSuperavit(cambios2); //O(logC) 
         
-        maxSuperavit();
+        maxSuperavit(); //O(1)
 
-    } 
+    } //Complejidad final =  O(logC)
      
-    public void actualizarListaGananciasYPerdidas() { 
-    int mayorGananciaActual = -1; 
-    int mayorPerdidaActual = -1;
-    mayorGanancia.clear();
-    mayorPerdida.clear();
-    if (!mayorGanancia.isEmpty()) {
-        int idCiudadGanancia = mayorGanancia.get(0);
-        mayorGananciaActual = ciudades[idCiudadGanancia].getGanancias();
-    }
-    if (!mayorPerdida.isEmpty()) {
-        int idCiudadPerdida = mayorPerdida.get(0);
-        mayorPerdidaActual = ciudades[idCiudadPerdida].getPerdidas();
-    }
-
-    for (Ciudad ciudad : ciudades) { // O(C)
-        int ganancia = ciudad.getGanancias();
-        if (ganancia > mayorGananciaActual) {
-            mayorGananciaActual = ganancia;
-            mayorGanancia.clear(); 
-            mayorGanancia.add(ciudad.getId());
-        } else if (ganancia == mayorGananciaActual && !mayorGanancia.contains(ciudad.getId())) {
-            
-            mayorGanancia.add(ciudad.getId());
-        }
-
-        int perdida = ciudad.getPerdidas();
-        if (perdida > mayorPerdidaActual) {
-            mayorPerdidaActual = perdida;
-            mayorPerdida.clear(); 
-            mayorPerdida.add(ciudad.getId());
-        } else if (perdida == mayorPerdidaActual && !mayorPerdida.contains(ciudad.getId())) {
-            mayorPerdida.add(ciudad.getId());
-        }
-    }
-}
-
-
-    private void actualizarListaPerdida(int indiceCiudad){
-        //si esta vacia, no tengo con que compara entonces agrego
-        int monto = this.ciudades[indiceCiudad].getPerdidas(); //es por lo que quiero ver si tengo que agregar o no
-        if (mayorPerdida.isEmpty()) {
-            mayorPerdida.add(indiceCiudad);
-            return;
-        }
-        //aca separo en casos, si es mayor clear() O(1) y agrego, si es igual,agrego
-        else if(monto > this.maxPerdida){
-            this.mayorPerdida.clear();//O(1)
-            this.mayorPerdida.add(indiceCiudad);
-        }else if (monto == maxPerdida ) {
-            this.mayorPerdida.add(indiceCiudad);
-        }
-        this.maxPerdida = this.ciudades[this.mayorPerdida.get(0)].getPerdidas();
-    }
     
-    private void actualizarListaGanancia(int indiceCiudad){
-        int monto = this.ciudades[indiceCiudad].getGanancias();
-      
-        if (mayorGanancia.isEmpty()) {
-            mayorGanancia.add(indiceCiudad);
-            return;
-        }
-        //aca separo en casos, si es mayor clear() O(1) y agrego, si es igual,agrego
-       else if(monto > this.maxGanancia){
-            this.mayorGanancia.clear();//O(1)
-            this.mayorGanancia.add(indiceCiudad);
-        }else if (monto == this.maxGanancia ) {
-            this.mayorGanancia.add(indiceCiudad);
-        }
-        this.maxGanancia = this.ciudades[this.mayorGanancia.get(0)].getGanancias();
+//En caso de empate, devuelve la que tiene menor identificador
+private void maxSuperavit(){
+        
+    int idMaxS = this.mayorSuperavit; //O(1)
+    int actualS = this.ciudades[idMaxS].getSuperavit(); //O(1)
+    if( actualS < heapSuperavit.getMax().getSuperavit()){ //O(1)
+        this.mayorSuperavit = heapSuperavit.getMax().getId(); //O(1)
+    }
+    else if(actualS == heapSuperavit.getMax().getSuperavit()  //O(1)
+        &&  heapSuperavit.getMax().getId() < idMaxS ){ //O(1)
+            this.mayorSuperavit = heapSuperavit.getMax().getId(); //O(1)
+    } 
+}  //COMPLEJIDAD O(1)
+
+
+
+private void actualizarMayorGanancia(Traslado traslado){ 
+        int numeroDeCiudadOrigen = ciudades[traslado.getOrigen()].getId(); //O(1)
+        int gananciaNueva = traslado.getGananciaNeta(); //O(1)
+        int gananciaTotalOrigen = ciudades[traslado.getOrigen()].getGanancias() + gananciaNueva ; //O(1)
        
-    }
+        if (mayorGanancia.isEmpty() || gananciaTotalOrigen == ciudades[mayorGanancia.get(0)].getGanancias())    //O(1)
+          {  mayorGanancia.add(numeroDeCiudadOrigen);} //O(1)   
+        else if (gananciaTotalOrigen > ciudades[mayorGanancia.get(0)].getGanancias()) {                                  
+            mayorGanancia.clear(); //O(1)
+            mayorGanancia.add(numeroDeCiudadOrigen);  //O(1)
+        } 
+    }// Complejidad  O(1)
+    
+private void actualizarMayorPerdida(Traslado traslado){  
+        
+        int numeroDeCiudadDestino = ciudades[traslado.getDestino()].getId();//O(1)
+        int perdidaNueva = traslado.getGananciaNeta();//O(1)
+        int perdidaTotalDestino = ciudades[traslado.getDestino()].getPerdidas() + perdidaNueva ;//O(1)
+        if (mayorPerdida.isEmpty() || perdidaTotalDestino == ciudades[mayorPerdida.get(0)].getPerdidas())
+           { mayorPerdida.add(numeroDeCiudadDestino);}//O(1)
+        else if (perdidaTotalDestino > ciudades[mayorPerdida.get(0)].getPerdidas()){
+            mayorPerdida.clear();
+            mayorPerdida.add(numeroDeCiudadDestino);
+        } //O(1)
+    } // Complejidad O(1)
 
-    private void sincronizarHeap(Heap<Traslado> heap,ArrayList<Integer> indices){ //int[] indices
-        for(int i  = 0; i<indices.size();i++){
-            heap.eliminarPorPosicion(indices.get(i)); 
-        }
-    }//cada vez que elimino por posicion, los indices cambian 
 
-  private void sincronizarHeapAntiguo(int[] indices){
-        //en esta funcion le paso los elementos a borrar
-        for(int index : indices){
-            
-            setearPosicionesAntiguo(this.heapAntiguo.eliminarPorPosicion(index));
-        }
-    }
+/*======================================================================================
+ *                  SINCRONIZACION DE HEAPS
+ * =====================================================================================
+ */
 
-    private void sincronizarHeapRedituable(int[] indices){
-        //en esta funcion le paso los elementos a borrar
-        for(int index : indices){
-            setearPosicionesRedituable(this.heapRedituable.eliminarPorPosicion(index));
-        }
-    }
-
-    //CADA VEZ QUE BORRO ALGO, ESTOY MODIFICANDO POSICIONES, POR LO QUE DEBERIA SETEARLO CADA VEZ
-    private void sincronizarRedituable( int pos){
-          
-            ArrayList<Integer> cambios = this.heapRedituable.eliminarPorPosicion(pos);
+   private void sincronizarRedituable( int pos){
+            ArrayList<Integer> cambios = this.heapRedituable.eliminarPorPosicion(pos); //Log(T)
             if(cambios.size()!=0){
-            setearPosicionesRedituable(cambios);
+            setearPosicionesRedituable(cambios); //Log(T)
             }
-    }
+    }//compeljidad O(logT)
     
     private void sincronizarAntiguo( int pos){
        
-        ArrayList<Integer> cambios = this.heapAntiguo.eliminarPorPosicion(pos);
+        ArrayList<Integer> cambios = this.heapAntiguo.eliminarPorPosicion(pos); //Log(T)
         if(cambios.size()!=0){
-        setearPosicionesAntiguo(cambios);
-        }//PROBLEMA, CAMBIOS, LA LISTA DE SWATS ME DEVUELVE 6, Y 6 YA LO ELIMINE, EN VEZ DE ACTUALIZAR ASI, DEBERIA HACERLO DE OTRA MANERA
-    }
-
-
-
-    
-//En caso de empate, devuelve la que tiene menor identificador
-    private void maxSuperavit(){
-        
-        int idMaxS = this.mayorSuperavit; 
-        int actualS = this.ciudades[idMaxS].getSuperavit();
-        if( actualS < heapSuperavit.getMax().getSuperavit()){
-            this.mayorSuperavit = heapSuperavit.getMax().getId();
+        setearPosicionesAntiguo(cambios); //Log(T)
         }
-        else if(actualS == heapSuperavit.getMax().getSuperavit() 
-            &&  heapSuperavit.getMax().getId() < idMaxS ){
-                this.mayorSuperavit = heapSuperavit.getMax().getId();
-        }
-       
-    //O(1)
-    }
+    }//complejidad O(logT)
 
- ///====================================================================
-    ///         SETEO DE POSICIONES
-    /// =================================================================
-    /// 
-    private void inicializarPosicionesHeaps() {
-        ArrayList<Traslado> elementosRedituable = this.heapRedituable.elementos();
-        ArrayList<Traslado> elementosAntiguo = this.heapAntiguo.elementos();
-       
-        for (int i = 0; i < elementosRedituable.size(); i++) {
-            Traslado t = elementosRedituable.get(i);
-            t.setPosRedituable(i);
-        }
-    
-        for (int i = 0; i < elementosAntiguo.size(); i++) {
-            Traslado t = elementosAntiguo.get(i);
-            t.setPosHeapAntiguo(i);
-        }
-    }
-    
-    private void inicializarPosicionesSuperavit(){
-        ArrayList<Ciudad> elementosSuperavit = this.heapSuperavit.elementos();
-        
-            
-        for (int i = 0; i < elementosSuperavit.size(); i++) {
-            Ciudad c = elementosSuperavit.get(i);
-            c.setPosHeapSuperavit(i);
-        }
-    }
-
-
-    //OBTENGO EL INDICE Y SETEO
-    private void setearPosicionesRedituable(ArrayList<Integer> posiciones){
-    for (int pos : posiciones) {
-        Traslado traslado = heapRedituable.obtener(pos);
-        traslado.setPosRedituable(pos);
-    }
-}
-
-    private void setearPosicionesAntiguo(ArrayList<Integer> posiciones){
-    for (int pos : posiciones) {
-        Traslado traslado = heapAntiguo.obtener(pos);
-        traslado.setPosHeapAntiguo(pos);
-    }
-}
-    private void setearPosicionesSuperavit(ArrayList<Integer> posiciones){
-    for (int pos : posiciones) {
-        Ciudad ciudad = heapSuperavit.obtener(pos);
-        ciudad.setPosHeapSuperavit(pos);
-    }
-}   
-
-
-    // PRUEBO OTRO ENFOQUE
-    private void actualizarMayorGanancia(Traslado traslado){ // Complejidad: O(1)
-            int numeroDeCiudadOrigen = ciudades[traslado.getOrigen()].getId();
-            int gananciaTotalOrigen = ciudades[traslado.getOrigen()].getGanancias() + traslado.getGananciaNeta();
-           
-            if (mayorGanancia.isEmpty() || gananciaTotalOrigen == ciudades[mayorGanancia.get(0)].getGanancias())    
-                mayorGanancia.add(numeroDeCiudadOrigen);   
-            else if (gananciaTotalOrigen > ciudades[mayorGanancia.get(0)].getGanancias()){                                  
-                mayorGanancia.clear();
-                mayorGanancia.add(numeroDeCiudadOrigen); 
-            } 
-        }
-        
-    private void actualizarMayorPerdida(Traslado traslado){  // Complejidad: O(1)
-            
-            int numeroDeCiudadDestino = ciudades[traslado.getDestino()].getId();
-            int perdidaTotalDestino = ciudades[traslado.getDestino()].getPerdidas() + traslado.getGananciaNeta();
-            if (mayorPerdida.isEmpty() || perdidaTotalDestino == ciudades[mayorPerdida.get(0)].getPerdidas())
-                mayorPerdida.add(numeroDeCiudadDestino);
-            else if (perdidaTotalDestino > ciudades[mayorPerdida.get(0)].getPerdidas()){
-                mayorPerdida.clear();
-                mayorPerdida.add(numeroDeCiudadDestino);
-            } 
-        }
-    
   
+
 }    
     
         

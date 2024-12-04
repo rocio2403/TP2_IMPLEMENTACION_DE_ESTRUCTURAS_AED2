@@ -1,5 +1,10 @@
 package aed;
-//implements Comparable<Traslado> 
+/*Materia : Algoritmos y Estructuras de datos 2
+ * Segundo cuatrimestre 2024 
+ * Reentrega trabajo practico
+ * Grupo BYMRO.
+ */
+
 public class Traslado {
     
     private int id;
@@ -56,16 +61,16 @@ public class Traslado {
     
     @Override
     public String toString() {
-        return String.valueOf(this.id);
-    }
+    return "Traslado{" +
+            "id=" + id +
+            ", origen=" + origen +
+            ", destino=" + destino +
+            ", gananciaNeta=" + gananciaNeta +
+            ", timestamp=" + timestamp +
+            ", posHeapAntiguo=" + posHeapAntiguo +
+            ", posHeapRedituable=" + posHeapRedituable +
+            '}';
+}
 
-    // //compareTo, armo para minheap y maxheap especificamente, en comparatorTraslados
-    // @Override
-    // public int compareTo(Traslado other) {
-    //     if (this.gananciaNeta != other.gananciaNeta) {
-    //         return Integer.compare(other.gananciaNeta, this.gananciaNeta);
-    //     } else {
-    //         return Integer.compare(this.id, other.id);
-    //     }
-    // }
+
 }
