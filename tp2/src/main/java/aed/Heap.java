@@ -13,7 +13,7 @@ public class Heap<T> {
     private int cardinal; 
     private Comparator<T> comparator;
 
-    // Constructor de heap vacío
+    // Constructor de heap vacio
     public Heap(Comparator<T> comparator) { 
         this.cardinal = 0;                  // O(1)   
         this.heap = new ArrayList<T>();     // O(1)
@@ -24,45 +24,53 @@ public class Heap<T> {
     public Heap(Comparator<T> comparator, T[] lista) {
         this.cardinal = lista.length;
         this.heap = new ArrayList<T>();
-        this.heap.addAll(Arrays.asList(lista));
+        this.heap.addAll(Arrays.asList(lista)); //O(n)
         this.comparator = comparator;
-        construirHeap();
-    }
+        construirHeap(); //O(n)
+    } //Complejidad O(n)
         
-    public  ArrayList<Integer> construirHeap() { 
+
+    public  ArrayList<Integer> construirHeap() { //https://youtu.be/C8IqJshhVbg?si=v8nW5lusxiqwLVGe Algoritmo de Floyd
         ArrayList<Integer> cambios = new ArrayList<>();
-        for (int i = (cardinal - 1) / 2; i >= 0; i--) {
+        for (int i = (cardinal - 1) / 2; i >= 0; i--) { //O(n)
             reheap(i,cambios);  
         }
         return cambios;
-    }
+    }//complejidad O(n)
+
+    /*Justificacion de la complejidad
+     * Al construir el heap, se empieza ajustando desde los nodos internos, hasta la raiz(por eso el for comienza por el "ultimo").Si bien ajusta un nodo con reheap, puede tomar O(logn) en el peor caso, la mayoria de los nodos estan cerca de las hojas y casi no requieren ajuste, teniendo complejidad constante O(1),esto equilibra el trabajo total resultando en una complejidad final lineal O(n) y no O(nlogn)
+     * los nodos que estan mas cerca de la raiz son pocos pero requieren mas trabajo, mientras que los nodos más cerca de las hojas son muchos pero requieren menos esfuerzo.
+     */
+  
 
     public  ArrayList<Integer> obtenerPrioridades(){
-        ArrayList<Integer> posiciones = construirHeap();
+        ArrayList<Integer> posiciones = construirHeap(); //O(n)
         return posiciones;
-    }
+    }//complejidad O(n)
     
     public ArrayList<T> elementos(){
         return this.heap;
-    }
+    }//complejidad O(1)
 
     public T obtener(int posicion){   
         return heap.get(posicion);   
-    }
+    }//complejidad O(1)
     public boolean isEmpty() { 
         return cardinal < 1;
-    }
+    }//complejidad O(1)
     
-    public T getMax() { 
+    public T getPrimero() { 
         if (!isEmpty()) {
             return this.heap.get(0);
         }
         return null;
-    }
+    }//complejidad O(1)
     
     public int getCardinal() { 
         return cardinal;
-    }
+    }//complejidad O(1)
+
     public ArrayList<Integer> eliminarPorPosicion(int posicion) {
         ArrayList<Integer> cambios = new ArrayList<>();
         
@@ -71,36 +79,36 @@ public class Heap<T> {
         }
         
         if (posicion == this.cardinal - 1) {
-            borrarUltimo();
+            borrarUltimo(); //O(1)
             return cambios; 
         }
     
-        this.heap.set(posicion, this.heap.get(cardinal - 1));
-        cardinal--;
-        reheap(posicion, cambios);
-        this.heap.remove(cardinal);
+        this.heap.set(posicion, this.heap.get(cardinal - 1));//O(1)
+        cardinal--;//O(1)
+        reheap(posicion, cambios); //O(log(n))
+        this.heap.remove(cardinal);//O(1)
     
         return cambios;
-    }
+    }//complejidad O(log(n))
     
     
    
     public void borrarUltimo(){
-        this.heap.remove(cardinal-1);
+        this.heap.remove(cardinal-1);//O(1) porque solo borramos el ultimo,de acuerdo a las complejidades anexadas con el enunciado del trabajo practico
         this.cardinal--;
-    }
+    }//complejidad O(1)
     
     public ArrayList<Integer> encolar(T elem) {
-        ArrayList<Integer> cambios = new ArrayList<>();
+        ArrayList<Integer> cambios = new ArrayList<>(); //O(1)
         if (cardinal >= heap.size()) {
             heap.add(elem); 
         } else {
-            heap.set(cardinal, elem); 
+            heap.set(cardinal, elem); //o(1) 
         }
-        siftUp(cardinal, cambios); 
+        siftUp(cardinal, cambios); //O(log(n)) 
         cardinal++;
         return cambios; 
-    }
+    }//complejidad O(log(n))
     
     public Tupla<T,ArrayList<Integer>> desencolar() {
         ArrayList<Integer> cambios = new ArrayList<>();
@@ -110,7 +118,7 @@ public class Heap<T> {
             this.heap.set(0, this.heap.get(cardinal - 1));
             this.heap.remove(cardinal-1);
             this.cardinal--;
-            reheap(0,cambios);
+            reheap(0,cambios);//O(log(n))
         }else if (this.cardinal > 0) {
             raiz = this.heap.get(0);
             this.heap.remove(cardinal-1);
@@ -119,14 +127,14 @@ public class Heap<T> {
         }
         Tupla<T,ArrayList<Integer>> res = new Tupla<>(raiz,cambios);
         return res; //retorno lista de cambios para no romper encapsulamiento 
-    }
+    }///complejidad O(log(n))
     
     public void reheap(int elem,ArrayList<Integer> cambios) {
         boolean done = false;
         T temp = heap.get(elem);
         int hijo_izq = 2 * elem + 1;
 
-        while (!done && hijo_izq < cardinal) {
+        while (!done && hijo_izq < cardinal) {//O(log(n))
             int hijo_mas_grande = hijo_izq;
             int hijo_der = hijo_izq + 1;
 
@@ -148,23 +156,23 @@ public class Heap<T> {
         this.heap.set(elem, temp);
         cambios.add(elem);
         
-    }
+    }//complejidad O(log(n))
 
     
     public ArrayList<Integer> modificarEnHeap(int posicion) {
-        // Complejidad: O(log n)
+        
         ArrayList<Integer> cambios = new ArrayList<>();
         if (esPosValida(posicion)) { // Complejidad: O(1)
             T elemento = this.heap.get(posicion); // O(1)
-            siftUp(posicion, cambios); // O(log n) en el peor caso
-            siftDown(posicion, cambios); // O(log n) en el peor caso
+            siftUp(posicion, cambios); // O(log n) 
+            siftDown(posicion, cambios); // O(log n) 
         }
         return cambios; // Complejidad: O(1)
-    }
+    }// Complejidad: O(log n)
     
     private void siftUp(int posicion, ArrayList<Integer> cambios) {
-        //Propósito: Garantizar que el heap preserve la propiedad del máximo mientras sube el nuevo elemento a su posición correcta.
-        // Complejidad: O(log n)
+        //Proposito: Garantizar que el heap preserve la propiedad del heap mientras sube el nuevo elemento a su posicion correcta.
+       
         int padre = (posicion - 1) / 2; // O(1)
         T elemento = this.heap.get(posicion); // O(1)
         while (posicion > 0 && comparator.compare(elemento, this.heap.get(padre)) > 0) { // O(log n)
@@ -175,11 +183,11 @@ public class Heap<T> {
         }
         this.heap.set(posicion, elemento); // O(1)
         cambios.add(posicion); // O(1)
-    }
+    } // Complejidad: O(log n)
     
     private void siftDown(int posicion, ArrayList<Integer> cambios) {
-        //Propósito: Asegurar que un elemento en una posición inicial dada descienda hasta donde preserve la propiedad del heap.
-        // Complejidad: O(log n)
+        //Proposito: Asegurar que un elemento en una posicion inicial dada descienda hasta donde preserve la propiedad del heap.
+        
         T elemento = this.heap.get(posicion); // O(1)
         int hijo_izq = 2 * posicion + 1; // O(1)
     
@@ -202,11 +210,11 @@ public class Heap<T> {
         }
         this.heap.set(posicion, elemento); // O(1)
         cambios.add(posicion); // O(1)
-    }
+    }// Complejidad: O(log n)
     
     private boolean esPosValida(int posicion) {
         return posicion >= 0 && posicion < cardinal;
-    }
+    } //O(1)
     
     @Override
     public String toString() {

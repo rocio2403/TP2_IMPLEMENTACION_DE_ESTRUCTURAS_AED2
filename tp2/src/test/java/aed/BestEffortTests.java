@@ -195,4 +195,113 @@ public class BestEffortTests {
         assertEquals(2, sis.ciudadConMayorSuperavit());
 
     }
+
+    /*=============================================================================================================================
+     *                                      AGREGAMOS NUESTROS TEST PROPIOS EN ESTA SECCION
+     * ============================================================================================================================
+     */
+        
+    @Test
+    void test_un_traslado(){
+        Traslado[] nuevos = new Traslado[] {
+            new Traslado(1, 6, 5, 40, 6),
+            new Traslado(0, 3, 4, 100, 7),
+        };
+        BestEffort sis = new BestEffort(this.cantCiudades, nuevos);
+
+        sis.despacharMasAntiguos(1);
+        
+        assertEquals(6, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(6))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(5)), sis.ciudadesConMayorPerdida());
+
+    }
+
+    @Test
+    void test_dos_despachos_antiguos(){
+        Traslado[] nuevos = new Traslado[] {
+            new Traslado(1, 3, 4, 40, 6),
+            new Traslado(0, 3, 4, 100, 7),
+        };
+        BestEffort sis = new BestEffort(this.cantCiudades, nuevos);
+
+        sis.despacharMasAntiguos(1);
+        
+        assertEquals(3, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(3))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(4)), sis.ciudadesConMayorPerdida());
+
+        sis.despacharMasAntiguos(1);
+
+        assertEquals(3, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(3))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(4)), sis.ciudadesConMayorPerdida());
+
+    }
+
+    @Test
+    void test_dos_despachos_redituables(){
+        Traslado[] nuevos = new Traslado[] {
+            new Traslado(1, 2, 0, 400, 6),
+            new Traslado(0, 2, 1, 1000, 7),
+        };
+        BestEffort sis = new BestEffort(3, nuevos);
+
+        sis.despacharMasRedituables(1);
+        
+        assertEquals(2, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(2))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(1)), sis.ciudadesConMayorPerdida());
+
+        sis.despacharMasRedituables(1);
+
+        assertEquals(2, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(2))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(1)), sis.ciudadesConMayorPerdida());
+
+    }
+
+    @Test
+    void test_dos_despachos_mixtos(){
+        Traslado[] nuevos = new Traslado[] {
+            new Traslado(1, 2, 0, 10, 10),
+            new Traslado(2, 0, 1, 400, 6),
+            new Traslado(0, 2, 1, 1000, 7),
+        };
+        BestEffort sis = new BestEffort(3, nuevos);
+
+        sis.despacharMasAntiguos(1);
+        
+        assertEquals(0, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(0))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(1)), sis.ciudadesConMayorPerdida());
+
+        sis.despacharMasRedituables(1);
+
+        assertEquals(2, sis.ciudadConMayorSuperavit());
+        assertSetEquals((new ArrayList<>(Arrays.asList(2))), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(1)), sis.ciudadesConMayorPerdida());
+
+    }
+        @Test
+    void ganancia_perdida_empatadas() {
+        Traslado[] empates = new Traslado[] {
+            new Traslado(1, 0, 1, 100, 10),
+            new Traslado(2, 1, 2, 100, 20),
+            new Traslado(3, 2, 3, 100, 30),
+            new Traslado(4, 3, 0, 100, 40)
+        };
+        BestEffort sis = new BestEffort(4, empates);
+
+        sis.despacharMasRedituables(4);
+
+        assertSetEquals(new ArrayList<>(Arrays.asList(0, 1, 2, 3)), sis.ciudadesConMayorGanancia());
+        assertSetEquals(new ArrayList<>(Arrays.asList(0, 1, 2, 3)), sis.ciudadesConMayorPerdida());
+    }
+
+
+
+
+
+
 }

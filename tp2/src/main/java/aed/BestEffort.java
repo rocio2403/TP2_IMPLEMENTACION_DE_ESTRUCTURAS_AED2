@@ -21,6 +21,8 @@ import java.util.Comparator;
  * Descubrimos que el hecho de que no pasara el test de gananciaPromedioPorTraslado (considerando la nueva forma de actualizar posiciones) proviene de no haber considerado casos bordes, como eliminar el ultimo o desencolar cuando el heap tiene un solo elemento.
  * 
  * Dejamos comentada la complejidad en cada metodo.
+ * 
+ * Los test propios de la clase BestEffort se encuentran debajo de los proporcionados por la catedra.
  */
 
 
@@ -244,12 +246,12 @@ private void maxSuperavit(){
         
     int idMaxS = this.mayorSuperavit; //O(1)
     int actualS = this.ciudades[idMaxS].getSuperavit(); //O(1)
-    if( actualS < heapSuperavit.getMax().getSuperavit()){ //O(1)
-        this.mayorSuperavit = heapSuperavit.getMax().getId(); //O(1)
+    if( actualS < heapSuperavit.getPrimero().getSuperavit()){ //O(1)
+        this.mayorSuperavit = heapSuperavit.getPrimero().getId(); //O(1)
     }
-    else if(actualS == heapSuperavit.getMax().getSuperavit()  //O(1)
-        &&  heapSuperavit.getMax().getId() < idMaxS ){ //O(1)
-            this.mayorSuperavit = heapSuperavit.getMax().getId(); //O(1)
+    else if(actualS == heapSuperavit.getPrimero().getSuperavit()  //O(1)
+        &&  heapSuperavit.getPrimero().getId() < idMaxS ){ //O(1)
+            this.mayorSuperavit = heapSuperavit.getPrimero().getId(); //O(1)
     } 
 }  //COMPLEJIDAD O(1)
 

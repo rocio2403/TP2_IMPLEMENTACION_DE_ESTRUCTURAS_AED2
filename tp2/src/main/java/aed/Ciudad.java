@@ -10,6 +10,7 @@ public class Ciudad implements Comparable<Ciudad> {
     private int ganancias;
     private int superavit;
     private int posHeapSuperavit; 
+    
     public Ciudad(int id, int perdidas, int ganancias, int superavit) {
         this.id = id;
         this.perdidas = perdidas;
